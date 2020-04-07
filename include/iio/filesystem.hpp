@@ -5,8 +5,8 @@
 #include <filesystem>
 
 namespace iio {
-FILE *open(const std::string_view &filename, bool create_dir = true);
-FILE *open(const std::string_view &filename, const std::string_view &ext,
+FILE *fopen(const std::string_view &filename, bool create_dir = true);
+FILE *fopen(const std::string_view &filename, const std::string_view &ext,
            bool create_dir = true);
 } // namespace iio
 

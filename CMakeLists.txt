@@ -109,7 +109,7 @@ write_compiler_detection_header(
 # ##############################################################################
 # SOURCE FILES
 # ##############################################################################
-set(SOURCES src/iio.cpp src/filesystem.cpp src/bmp.cpp)
+set(SOURCES src/iio.cpp src/filesystem.cpp src/writer.cpp src/pnm.cpp)
 
 # ##############################################################################
 # STATIC LIBRARY

@@ -1,7 +1,7 @@
 #include "iio/filesystem.hpp"
 #include <filesystem>
 
-FILE *iio::open(const std::string_view &filename, bool create_dir) {
+FILE *iio::fopen(const std::string_view &filename, bool create_dir) {
   std::filesystem::path filepath(filename);
   filepath = std::filesystem::absolute(filepath);
   if (create_dir && !std::filesystem::is_directory(filepath.parent_path())) {
@@ -9,8 +9,8 @@ FILE *iio::open(const std::string_view &filename, bool create_dir) {
   }
   return std::fopen(filepath.c_str(), "wb");
 }
-FILE *open(const std::string_view &filename, const std::string_view &ext,
-           bool create_dir = true) {
+FILE *iio::fopen(const std::string_view &filename, const std::string_view &ext,
+                 bool create_dir) {
   std::filesystem::path filepath(filename);
   filepath = std::filesystem::absolute(filepath);
   filepath.replace_extension(ext);

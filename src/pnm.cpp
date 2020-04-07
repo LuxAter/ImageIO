@@ -1,27 +1,44 @@
 #include "iio/pnm.hpp"
 
-#include "common.hpp"
-#include "compiler.hpp"
-#include "iio/filesystem.hpp"
+#include <cassert>
+#include <cstdint>
+#include <memory>
+#include <string_view>
+#include <type_traits>
 
-bool iio::write_pnm_uint8(const std::string_view &filename,
-                          const std::size_t &width, const std::size_t &height,
-                          const std::uint8_t &channels,
-                          const std::uint8_t *data) {
-  FILE *fd = open(filename, "pnm");
-  if (fd == nullptr)
+#include "writer.hpp"
+
+bool iio::PnmWriter::open() {
+  if (!is_valid())
     return false;
-
-  fwrite(fd, 'P');
-  if(channels == 1) fwrite(fd, 5);
-  else fwrite(fd, 6);
-  fwrite(fd, '\n');
-  fwrite(fd, &width);
-  fwrite(fd, ' ');
-  fwrite(fd, &height);
-  fwrite(fd, 0xff);
-
-  std::fclose(fd);
-  fd = nullptr;
+  fprint(fp, "P%lu %lu\n", spec.width, spec.height);
+  if (pnm_type != 1) {
+    fprint(fp, "%lu\n", (1 << bits_per_pixel) - 1);
+  }
+  if (spec.tile_width != 0 && spec.tile_height != 0)
+    tilebuffer.resize(spec.image_bytes<std::uint8_t>());
   return true;
+}
+bool iio::PnmWriter::close() {
+  if (!is_valid())
+    return true;
+  bool result = true;
+  if (spec.tile_width != 0 && spec.tile_height != 0) {
+    assert(tilebuffer.size() != 0);
+    result &= write_scanlines_native(0, spec.height, &tilebuffer[0]);
+    std::vector<std::uint8_t>().swap(tilebuffer);
+  }
+  std::fclose(fp);
+  fp = nullptr;
+  return true;
+}
+bool iio::PnmWriter::write_scanline_native(const std::size_t &y,
+                                           const std::uint8_t *data) {
+  if (!is_valid())
+    return false;
+  if (pnm_type == 1) {
+    return fwrite_raw_binary(fp, data, 1, spec);
+  } else {
+    return fwrite_raw(fp, data, 1, spec, (1 << bits_per_pixel) - 1);
+  }
 }
