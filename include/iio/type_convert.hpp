@@ -8,6 +8,11 @@
 
 namespace iio {
 template <typename From, typename To>
+typename std::enable_if<std::is_same<From, To>::value, To *>::type
+convert(const std::size_t &, const From *in_data) {
+  return in_data;
+}
+template <typename From, typename To>
 typename std::enable_if<std::is_same<To, std::uint8_t>::value &&
                             std::is_floating_point<From>::value,
                         To *>::type
@@ -19,18 +24,38 @@ convert(const std::size_t &size, const From *in_data) {
   return out_data;
 }
 template <typename From, typename To>
-typename std::enable_if<std::is_same<From, To>::value, To *>::type
-convert(const std::size_t &, const From *in_data) {
-  return in_data;
+typename std::enable_if<std::is_same<To, std::uint16_t>::value &&
+                            std::is_floating_point<From>::value,
+                        To *>::type
+convert(const std::size_t &size, const From *in_data) {
+  To *out_data = static_cast<To *>(std::malloc(size * sizeof(To)));
+  for (std::size_t i = 0; i < size; ++i) {
+    out_data[i] = static_cast<To>(in_data[i] * 0xffff);
+  }
+  return out_data;
+}
+template <typename From, typename To>
+typename std::enable_if<std::is_same<To, std::uint32_t>::value &&
+                            std::is_floating_point<From>::value,
+                        To *>::type
+convert(const std::size_t &size, const From *in_data) {
+  To *out_data = static_cast<To *>(std::malloc(size * sizeof(To)));
+  for (std::size_t i = 0; i < size; ++i) {
+    out_data[i] = static_cast<To>(in_data[i] * 0x00ffffff);
+  }
+  return out_data;
 }
 template <typename From, typename To>
 typename std::enable_if<std::is_convertible<From, To>::value &&
                             !std::is_same<From, To>::value &&
                             !(std::is_same<To, std::uint8_t>::value &&
+                              std::is_floating_point<From>::value) &&
+                            !(std::is_same<To, std::uint16_t>::value &&
+                              std::is_floating_point<From>::value) &&
+                            !(std::is_same<To, std::uint32_t>::value &&
                               std::is_floating_point<From>::value),
                         To *>::type
 convert(const std::size_t &size, const From *in_data) {
-  std::printf("CONVERTING FLOAT->UINT8X :%s\n", __PRETTY_FUNCTION__);
   To *out_data = static_cast<To *>(std::malloc(size * sizeof(To)));
   for (std::size_t i = 0; i < size; ++i) {
     out_data[i] = static_cast<To>(in_data[i]);
